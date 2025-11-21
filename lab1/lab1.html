@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Color Models Demo</title>
+<style>
+    body { font-family: sans-serif; padding: 20px; }
+    .block { margin-bottom: 25px; }
+    .row { margin: 5px 0; }
+    input[type=range] { width: 300px; }
+    #swatch {
+        width: 120px; height: 120px;
+        border: 2px solid #000;
+        margin-top: 20px;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>Палитра RGB</h2>
+
+<div>
+    <canvas id="paletteRG" width="300" height="200"
+            style="border:1px solid #000; cursor: crosshair;"></canvas>
+</div>
+
+<div style="margin-top: 10px;">
+    <canvas id="paletteB" width="300" height="25"
+            style="border:1px solid #000; cursor: pointer;"></canvas>
+</div>
+
+
+<h2>HEX</h2>
+<div class="block">
+    <input id="hex" type="text" value="#ff0000" />
+</div>
+
+<h2>RGB</h2>
+<div class="block">
+    <div class="row">R: <input id="R" type="number" min="0" max="255" />
+         <input id="R_s" type="range" min="0" max="255"></div>
+    <div class="row">G: <input id="G" type="number" min="0" max="255" />
+         <input id="G_s" type="range" min="0" max="255"></div>
+    <div class="row">B: <input id="B" type="number" min="0" max="255" />
+         <input id="B_s" type="range" min="0" max="255"></div>
+</div>
+
+<h2>HSV</h2>
+<div class="block">
+    <div class="row">H: <input id="h" type="number" min="0" max="360" step="0.1"/>
+         <input id="h_s" type="range" min="0" max="360" step="0.1"></div>
+    <div class="row">S: <input id="s" type="number" min="0" max="100" step="0.1"/>
+         <input id="s_s" type="range" min="0" max="100" step="0.1"></div>
+    <div class="row">V: <input id="v" type="number" min="0" max="100" step="0.1"/>
+         <input id="v_s" type="range" min="0" max="100" step="0.1"></div>
+</div>
+
+<h2>CMYK</h2>
+<div class="block">
+    <div class="row">C: <input id="c" type="number" min="0" max="100" step="0.1"/>
+         <input id="c_s" type="range" min="0" max="100" step="0.1"></div>
+    <div class="row">M: <input id="m" type="number" min="0" max="100" step="0.1"/>
+         <input id="m_s" type="range" min="0" max="100" step="0.1"></div>
+    <div class="row">Y: <input id="y" type="number" min="0" max="100" step="0.1"/>
+         <input id="y_s" type="range" min="0" max="100" step="0.1"></div>
+    <div class="row">K: <input id="k" type="number" min="0" max="100" step="0.1"/>
+         <input id="k_s" type="range" min="0" max="100" step="0.1"></div>
+</div>
+
+<div id="swatch"></div>
+
+<script>
+function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(x =>
+        x.toString(16).padStart(2, "0")
+    ).join("");
+}
+
+function hexToRgb(hex) {
+    hex = hex.replace("#", "");
+    return [
+        parseInt(hex.substring(0,2), 16),
+        parseInt(hex.substring(2,4), 16),
+        parseInt(hex.substring(4,6), 16)
+    ];
+}
+
+function rgbToCmyk(r, g, b) {
+    let R = r / 255, G = g / 255, B = b / 255;
+    let K = 1 - Math.max(R, G, B);
+
+    if (K === 1) return [0,0,0,100]; 
+
+    let C = (1 - R - K) / (1 - K);
+    let M = (1 - G - K) / (1 - K);
+    let Y = (1 - B - K) / (1 - K);
+
+    return [C*100, M*100, Y*100, K*100];
+}
+
+function cmykToRgb(C, M, Y, K) {
+    C /= 100; M /= 100; Y /= 100; K /= 100;
+
+    let R = 255 * (1 - C) * (1 - K);
+    let G = 255 * (1 - M) * (1 - K);
+    let B = 255 * (1 - Y) * (1 - K);
+
+    return [R, G, B];
+}
+
+function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+
+    let mx = Math.max(r, g, b),
+        mn = Math.min(r, g, b);
+    let d = mx - mn;
+    let h = 0;
+
+    if (d !== 0) {
+        if (mx === r) h = 60 * (((g - b) / d) % 6);
+        else if (mx === g) h = 60 * ((b - r) / d + 2);
+        else h = 60 * ((r - g) / d + 4);
+    }
+
+    if (h < 0) h += 360;
+
+    let s = mx === 0 ? 0 : d / mx;
+    let v = mx;
+
+    return [h, s*100, v*100];
+}
+
+function hsvToRgb(h, s, v) {
+    s /= 100; v /= 100;
+
+    let c = v * s;
+    let x = c * (1 - Math.abs((h/60) % 2 - 1));
+    let m = v - c;
+
+    let r=0,g=0,b=0;
+
+    if (0<=h && h<60)   [r,g,b] = [c,x,0];
+    else if (60<=h && h<120) [r,g,b] = [x,c,0];
+    else if (120<=h && h<180) [r,g,b] = [0,c,x];
+    else if (180<=h && h<240) [r,g,b] = [0,x,c];
+    else if (240<=h && h<300) [r,g,b] = [x,0,c];
+    else [r,g,b] = [c,0,x];
+
+    return [(r+m)*255, (g+m)*255, (b+m)*255];
+}
+
+const hex = document.getElementById("hex");
+
+const R = document.getElementById("R");
+const G = document.getElementById("G");
+const B = document.getElementById("B");
+
+const R_s = document.getElementById("R_s");
+const G_s = document.getElementById("G_s");
+const B_s = document.getElementById("B_s");
+
+const h = document.getElementById("h");
+const s = document.getElementById("s");
+const v = document.getElementById("v");
+
+const h_s = document.getElementById("h_s");
+const s_s = document.getElementById("s_s");
+const v_s = document.getElementById("v_s");
+
+const c = document.getElementById("c");
+const m = document.getElementById("m");
+const y = document.getElementById("y");
+const k = document.getElementById("k");
+
+const c_s = document.getElementById("c_s");
+const m_s = document.getElementById("m_s");
+const y_s = document.getElementById("y_s");
+const k_s = document.getElementById("k_s");
+
+const swatch = document.getElementById("swatch");
+
+function syncSlidersRGB(r,g,b){
+    R_s.value=r; G_s.value=g; B_s.value=b;
+}
+function syncSlidersHSV(H,S,V){
+    h_s.value=H; s_s.value=S; v_s.value=V;
+}
+function syncSlidersCMYK(C,M,Y,K){
+    c_s.value=C; m_s.value=M; y_s.value=Y; k_s.value=K;
+}
+
+let inputMode = "hex";
+
+function updateColorFrom(mode){
+    inputMode = mode;
+
+    let r,g,b;
+
+    if (mode==="rgb"){
+        r=+R.value; g=+G.value; b=+B.value;
+    }
+    else if (mode==="hsv"){
+        [r,g,b]=hsvToRgb(+h.value,+s.value,+v.value);
+    }
+    else if (mode==="cmyk"){
+        [r,g,b]=cmykToRgb(+c.value,+m.value,+y.value,+k.value);
+    }
+    else if (mode==="hex"){
+        [r,g,b]=hexToRgb(hex.value);
+    }
+
+    r=Math.round(r); g=Math.round(g); b=Math.round(b);
+
+    R.value=r; G.value=g; B.value=b;
+    syncSlidersRGB(r,g,b);
+
+    hex.value=rgbToHex(r,g,b);
+
+    let [H,S,V]=rgbToHsv(r,g,b);
+    if (mode!=="hsv"){
+        h.value=H.toFixed(1);
+        s.value=S.toFixed(1);
+        v.value=V.toFixed(1);
+        syncSlidersHSV(H,S,V);
+    }
+
+    let [C,M,Y,K]=rgbToCmyk(r,g,b);
+    if (mode!=="cmyk"){
+        c.value=C.toFixed(1);
+        m.value=M.toFixed(1);
+        y.value=Y.toFixed(1);
+        k.value=K.toFixed(1);
+        syncSlidersCMYK(C,M,Y,K);
+    }
+
+    swatch.style.background = rgbToHex(r,g,b);
+}
+
+hex.oninput = ()=>updateColorFrom("hex");
+
+[R,G,B].forEach(inp => inp.oninput = ()=>updateColorFrom("rgb"));
+[R_s,G_s,B_s].forEach(sl =>
+    sl.oninput = ()=>{
+        R.value=R_s.value;
+        G.value=G_s.value;
+        B.value=B_s.value;
+        updateColorFrom("rgb");
+    });
+
+[c,m,y,k].forEach(inp => inp.oninput = ()=>updateColorFrom("cmyk"));
+[c_s,m_s,y_s,k_s].forEach(sl =>
+    sl.oninput=()=>{
+        c.value=c_s.value;
+        m.value=m_s.value;
+        y.value=y_s.value;
+        k.value=k_s.value;
+        updateColorFrom("cmyk");
+    });
+
+[h,s,v].forEach(inp => inp.oninput = ()=>updateColorFrom("hsv"));
+[h_s,s_s,v_s].forEach(sl =>
+    sl.oninput=()=>{
+        h.value=h_s.value;
+        s.value=s_s.value;
+        v.value=v_s.value;
+        updateColorFrom("hsv");
+    });
+
+const paletteRG = document.getElementById("paletteRG");
+const paletteB  = document.getElementById("paletteB");
+
+const ctxRG = paletteRG.getContext("2d");
+const ctxB  = paletteB.getContext("2d");
+
+let paletteBlue = 0;  
+
+function drawBlueStrip() {
+    let grad = ctxB.createLinearGradient(0, 0, paletteB.width, 0);
+    for (let i = 0; i <= 255; i+=5) {
+        grad.addColorStop(i/255, `rgb(0,0,${i})`);
+    }
+    ctxB.fillStyle = grad;
+    ctxB.fillRect(0,0,paletteB.width,paletteB.height);
+}
+
+function drawRGSquare(B) {
+    let w = paletteRG.width;
+    let h = paletteRG.height;
+
+    let img = ctxRG.createImageData(w, h);
+    let data = img.data;
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+
+            let R = Math.round((x / w) * 255);
+            let G = Math.round((y / h) * 255);
+
+            let idx = 4 * (y * w + x);
+            data[idx] = R;
+            data[idx + 1] = G;
+            data[idx + 2] = B;
+            data[idx + 3] = 255;
+        }
+    }
+    ctxRG.putImageData(img, 0, 0);
+}
+
+paletteB.addEventListener("mousedown", e => {
+    let x = e.offsetX;
+    paletteBlue = Math.round((x / paletteB.width) * 255);
+
+    drawRGSquare(paletteBlue);
+
+    B.value = paletteBlue;
+    inputMode = "rgb";
+    updateColorFrom("rgb");
+});
+
+paletteRG.addEventListener("mousedown", e => {
+    // вычисляем R и G по координатам
+    let Rv = Math.round((e.offsetX / paletteRG.width) * 255);
+    let Gv = Math.round((e.offsetY / paletteRG.height) * 255);
+
+    R.value = Rv;
+    G.value = Gv;
+    B.value = paletteBlue;
+
+    inputMode = "rgb";
+    updateColorFrom("rgb");
+});
+
+drawBlueStrip();
+drawRGSquare(0);
+
+
+hex.value="#ff0000";
+updateColorFrom("hex");
+</script>
+
+</body>
+</html>
