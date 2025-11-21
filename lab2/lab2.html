@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Обработка изображений</title>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  canvas { border:1px solid #000; margin: 5px; }
+  .controls { margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<h1>Обработка изображений: Морфология и Медианный фильтр</h1>
+
+<input type="file" id="imageLoader" accept="image/*"><br>
+
+<div class="controls">
+  <label>Метод:
+    <select id="methodSelect">
+      <option value="median">Медианный фильтр</option>
+      <option value="erode">Эрозия</option>
+      <option value="dilate">Дилатация</option>
+      <option value="open">Открытие</option>
+      <option value="close">Закрытие</option>
+    </select>
+  </label>
+
+  <label>Размер окна / структурирующего элемента:
+    <input type="number" id="kernelSize" value="3" min="3" max="11" step="2">
+  </label>
+
+  <button id="applyBtn">Применить</button>
+</div>
+
+<div>
+  <canvas id="originalCanvas" width="300" height="300"></canvas>
+  <canvas id="resultCanvas" width="300" height="300"></canvas>
+</div>
+
+<script src="imageProcessing.js"></script>
+</body>
+</html>
