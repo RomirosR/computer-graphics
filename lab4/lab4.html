@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Отсечение отрезков</title>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  canvas { border: 1px solid black; background: #f9f9f9; }
+  .controls { margin: 10px 0; }
+  table { border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #999; padding: 4px 8px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>Отсечение отрезков</h1>
+
+<div class="controls">
+  <label>Алгоритм:
+    <select id="algorithmSelect">
+      <option value="liangBarsky">Лианг-Барски (прямоугольное окно)</option>
+      <option value="convexPolygon">Отсечение выпуклым многоугольником</option>
+    </select>
+  </label>
+  <br><br>
+  <label>Загрузить файл: <input type="file" id="fileInput"></label>
+  <br><br>
+  <button id="drawBtn">Отобразить</button>
+</div>
+
+<canvas id="canvas" width="600" height="600"></canvas>
+<h2>Видимые отрезки:</h2>
+<div id="coordTable"></div>
+
+<script src="clip.js"></script>
+</body>
+</html>
