@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Растеризация линий и окружностей</title>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  canvas { border: 1px solid black; background: #f9f9f9; }
+  .controls { margin: 10px 0; }
+  input[type=number] { width: 60px; }
+  table { border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #999; padding: 4px 8px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>Растеризация линий и окружностей</h1>
+
+<div class="controls">
+  <label>Алгоритм:
+    <select id="algorithmSelect">
+      <option value="step">Пошаговый</option>
+      <option value="dda">ЦДА</option>
+      <option value="bresenhamLine">Брезенхем (линия)</option>
+      <option value="bresenhamCircle">Брезенхем (окружность)</option>
+    </select>
+  </label>
+  <br><br>
+  <label>x1: <input type="number" id="x1" value="10"></label>
+  <label>y1: <input type="number" id="y1" value="10"></label>
+  <label>x2: <input type="number" id="x2" value="200"></label>
+  <label>y2: <input type="number" id="y2" value="150"></label>
+  <label>радиус (для окружности): <input type="number" id="radius" value="50"></label>
+  <br><br>
+  <button id="drawBtn">Рисовать</button>
+</div>
+
+<canvas id="canvas" width="500" height="500"></canvas>
+<p id="timeOutput"></p>
+
+<h2>Координаты пикселей:</h2>
+<div id="coordTable"></div>
+
+<script src="raster.js"></script>
+</body>
+</html>
